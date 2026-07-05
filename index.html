@@ -194,6 +194,34 @@ body{
   opacity: 0.6;
 }
 
+/* Wrapper positions a custom chevron over native <select> elements,
+   since select styling can't be fully reset the way inputs can. */
+.select-wrapper{
+  position: relative;
+}
+
+.select-wrapper::after{
+  content: "⌄";
+  position: absolute;
+  right: 2px;
+  top: 46%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.native-select{
+  padding-right: 20px;
+  cursor: pointer;
+}
+
+/* Style the dropdown popover itself in dark mode where supported (iOS Safari). */
+.native-select option{
+  background: #1c1c1e;
+  color: var(--text-primary);
+}
+
 /* ------------------------------------------------------------------
    RESULTS GRID — the four big time cards
    ------------------------------------------------------------------ */
@@ -374,6 +402,30 @@ body{
       <label class="input-label" for="signOnTime">Sign On</label>
       <input type="time" id="signOnTime" class="native-input">
     </div>
+
+    <!-- Travel time override: Auto follows the weekday/window rule below,
+         or the crew member can pin it to 30 or 50 minutes manually. -->
+    <div class="input-card glass">
+      <label class="input-label" for="travelOverride">Travel Time</label>
+      <div class="select-wrapper">
+        <select id="travelOverride" class="native-input native-select">
+          <option value="auto">Auto</option>
+          <option value="30">30 min</option>
+          <option value="50">50 min</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Gap between TTA and Sign On: defaults to 15 min, can be reduced to 10. -->
+    <div class="input-card glass">
+      <label class="input-label" for="ttaOffset">TTA Gap</label>
+      <div class="select-wrapper">
+        <select id="ttaOffset" class="native-input native-select">
+          <option value="15">15 min</option>
+          <option value="10">10 min</option>
+        </select>
+      </div>
+    </div>
   </section>
 
   <!-- ============================================================
@@ -443,23 +495,31 @@ body{
    CONSTANTS
    -------------------------------------------------------------- */
 const STORAGE_KEYS = {
-  date: 'signOnApp_dutyDate',
-  time: 'signOnApp_signOnTime'
+  date:           'signOnApp_dutyDate',
+  time:           'signOnApp_signOnTime',
+  travelOverride: 'signOnApp_travelOverride',
+  ttaOffset:      'signOnApp_ttaOffset'
 };
 
-const MINUTES_TTA_OFFSET       = 15;  // Sign On - 15 min = TTA
-const MINUTES_P6_OFFSET        = 10;  // TTA - 10 min = P6
-const TRAVEL_MINUTES_LONG      = 50;  // weekday daytime rule
-const TRAVEL_MINUTES_SHORT     = 30;  // all other cases
-const DAYTIME_WINDOW_START_MIN = 7 * 60 + 30;  // 07:30
-const DAYTIME_WINDOW_END_MIN   = 20 * 60;      // 20:00
+const MINUTES_P6_OFFSET      = 10;  // TTA - 10 min = P6 (fixed, not user-configurable)
+const TRAVEL_MINUTES_LONG    = 50;  // auto rule inside the two windows below
+const TRAVEL_MINUTES_SHORT   = 30;  // auto rule everywhere else
+const DEFAULT_TTA_OFFSET_MIN = 15;  // default gap between TTA and Sign On
+
+// Two weekday windows that trigger the automatic 50-minute travel rule.
+// Outside these windows (or on weekends) the automatic rule is 30 minutes.
+const AUTO_WINDOW_1_START_MIN = 8 * 60;         // 08:00
+const AUTO_WINDOW_1_END_MIN   = 10 * 60;        // 10:00
+const AUTO_WINDOW_2_START_MIN = 17 * 60;        // 17:00
+const AUTO_WINDOW_2_END_MIN   = 20 * 60 + 30;   // 20:30
+
 const COUNTDOWN_WARNING_MIN    = 30;  // orange threshold
 const LEAVE_NOW_GRACE_MS       = 2 * 60 * 1000; // "Leave now!" grace window after zero
 
 /* --------------------------------------------------------------
    DOM REFERENCES (populated on DOMContentLoaded)
    -------------------------------------------------------------- */
-let dutyDateInput, signOnTimeInput;
+let dutyDateInput, signOnTimeInput, travelOverrideSelect, ttaOffsetSelect;
 let currentSchedule = null;
 
 /* --------------------------------------------------------------
@@ -522,28 +582,38 @@ function formatDuration(ms){
    CORE CALCULATION
    -------------------------------------------------------------- */
 
-// Given the duty date and Sign On time, compute every downstream time
-// and which travel rule applies.
-function computeSchedule(dutyDateStr, signOnTimeStr){
+// Given the duty date, Sign On time, a travel-time override ('auto', '30',
+// or '50'), and the TTA-to-Sign-On gap in minutes, compute every downstream
+// time and which travel rule applies.
+function computeSchedule(dutyDateStr, signOnTimeStr, travelOverride, ttaOffsetMinutes){
   const signOnDate = combineDateAndTime(dutyDateStr, signOnTimeStr);
-  const ttaDate    = addMinutes(signOnDate, -MINUTES_TTA_OFFSET);
+  const ttaDate    = addMinutes(signOnDate, -ttaOffsetMinutes);
   const p6Date     = addMinutes(ttaDate, -MINUTES_P6_OFFSET);
 
   // Weekday / weekend is derived from the Sign On date, per spec.
   const dayOfWeek  = signOnDate.getDay(); // 0 = Sunday ... 6 = Saturday
   const isWeekday  = dayOfWeek >= 1 && dayOfWeek <= 5;
 
-  // Daytime window check: 07:30–20:00 inclusive.
-  const minutesOfDay   = signOnDate.getHours() * 60 + signOnDate.getMinutes();
-  const inDaytimeWindow = minutesOfDay >= DAYTIME_WINDOW_START_MIN
-                        && minutesOfDay <= DAYTIME_WINDOW_END_MIN;
+  // Two daytime windows trigger the automatic 50-minute rule on weekdays:
+  // 08:00–10:00 and 17:00–20:30, both inclusive.
+  const minutesOfDay = signOnDate.getHours() * 60 + signOnDate.getMinutes();
+  const inWindow1 = minutesOfDay >= AUTO_WINDOW_1_START_MIN && minutesOfDay <= AUTO_WINDOW_1_END_MIN;
+  const inWindow2 = minutesOfDay >= AUTO_WINDOW_2_START_MIN && minutesOfDay <= AUTO_WINDOW_2_END_MIN;
 
-  const useLongTravelRule = isWeekday && inDaytimeWindow;
-  const travelMinutes     = useLongTravelRule ? TRAVEL_MINUTES_LONG : TRAVEL_MINUTES_SHORT;
+  const autoUsesLongRule = isWeekday && (inWindow1 || inWindow2);
+  const autoTravelMinutes = autoUsesLongRule ? TRAVEL_MINUTES_LONG : TRAVEL_MINUTES_SHORT;
+
+  // A manual override (30 or 50) takes precedence over the automatic rule.
+  const isManualOverride = travelOverride !== 'auto';
+  const travelMinutes    = isManualOverride ? parseInt(travelOverride, 10) : autoTravelMinutes;
+  const useLongTravelRule = travelMinutes === TRAVEL_MINUTES_LONG;
 
   const sairDate = addMinutes(p6Date, -travelMinutes);
 
-  return { signOnDate, ttaDate, p6Date, sairDate, useLongTravelRule, travelMinutes };
+  return {
+    signOnDate, ttaDate, p6Date, sairDate,
+    useLongTravelRule, travelMinutes, isManualOverride
+  };
 }
 
 /* --------------------------------------------------------------
@@ -568,17 +638,22 @@ function updateTimeCard(timeElId, badgeElId, newDate, referenceDate){
   badgeEl.textContent = dayBadgeLabel(newDate, referenceDate);
 }
 
-// Update the small "travel rule" indicator card.
+// Update the small "travel rule" indicator card. Shows a distinct purple
+// marker when the crew member has manually overridden the automatic rule.
 function updateRuleCard(schedule){
   const ruleIcon = document.getElementById('ruleIcon');
   const ruleText = document.getElementById('ruleText');
+  const minutes  = schedule.travelMinutes;
 
-  if (schedule.useLongTravelRule){
+  if (schedule.isManualOverride){
+    ruleIcon.textContent = '🟣';
+    ruleText.textContent = `Manual override: ${minutes} minute travel rule`;
+  } else if (schedule.useLongTravelRule){
     ruleIcon.textContent = '🟢';
-    ruleText.textContent = 'Using 50 minute travel rule';
+    ruleText.textContent = `Using ${minutes} minute travel rule`;
   } else {
     ruleIcon.textContent = '🔵';
-    ruleText.textContent = 'Using 30 minute travel rule';
+    ruleText.textContent = `Using ${minutes} minute travel rule`;
   }
 }
 
@@ -627,14 +702,18 @@ function updateCountdown(){
 function render(){
   const dutyDateStr    = dutyDateInput.value;
   const signOnTimeStr  = signOnTimeInput.value;
+  const travelOverride = travelOverrideSelect.value;        // 'auto' | '30' | '50'
+  const ttaOffsetMin   = parseInt(ttaOffsetSelect.value, 10); // 15 | 10
 
   if (!dutyDateStr || !signOnTimeStr) return;
 
   // Persist selections so they're restored next launch.
   localStorage.setItem(STORAGE_KEYS.date, dutyDateStr);
   localStorage.setItem(STORAGE_KEYS.time, signOnTimeStr);
+  localStorage.setItem(STORAGE_KEYS.travelOverride, travelOverride);
+  localStorage.setItem(STORAGE_KEYS.ttaOffset, String(ttaOffsetMin));
 
-  currentSchedule = computeSchedule(dutyDateStr, signOnTimeStr);
+  currentSchedule = computeSchedule(dutyDateStr, signOnTimeStr, travelOverride, ttaOffsetMin);
   const s = currentSchedule;
 
   updateTimeCard('time-signon', 'badge-signon', s.signOnDate, s.signOnDate);
@@ -653,19 +732,25 @@ function render(){
 // Restore last-used date & time from localStorage, or default to "now".
 function restoreOrDefaultInputs(){
   const now = new Date();
-  const storedDate = localStorage.getItem(STORAGE_KEYS.date);
-  const storedTime = localStorage.getItem(STORAGE_KEYS.time);
+  const storedDate           = localStorage.getItem(STORAGE_KEYS.date);
+  const storedTime           = localStorage.getItem(STORAGE_KEYS.time);
+  const storedTravelOverride = localStorage.getItem(STORAGE_KEYS.travelOverride);
+  const storedTtaOffset      = localStorage.getItem(STORAGE_KEYS.ttaOffset);
 
-  dutyDateInput.value   = storedDate || formatDateInputValue(now);
-  signOnTimeInput.value = storedTime || formatTime(now);
+  dutyDateInput.value        = storedDate || formatDateInputValue(now);
+  signOnTimeInput.value      = storedTime || formatTime(now);
+  travelOverrideSelect.value = storedTravelOverride || 'auto';
+  ttaOffsetSelect.value      = storedTtaOffset || String(DEFAULT_TTA_OFFSET_MIN);
 }
 
 /* --------------------------------------------------------------
    BOOTSTRAP
    -------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
-  dutyDateInput   = document.getElementById('dutyDate');
-  signOnTimeInput = document.getElementById('signOnTime');
+  dutyDateInput        = document.getElementById('dutyDate');
+  signOnTimeInput      = document.getElementById('signOnTime');
+  travelOverrideSelect = document.getElementById('travelOverride');
+  ttaOffsetSelect      = document.getElementById('ttaOffset');
 
   restoreOrDefaultInputs();
   render();
@@ -673,6 +758,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Recalculate instantly on any input change — no Calculate button.
   dutyDateInput.addEventListener('input', render);
   signOnTimeInput.addEventListener('input', render);
+  travelOverrideSelect.addEventListener('change', render);
+  ttaOffsetSelect.addEventListener('change', render);
 
   // Keep the countdown ticking every second even without input changes.
   setInterval(updateCountdown, 1000);

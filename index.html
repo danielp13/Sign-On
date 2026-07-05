@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sign On</title>
+
+<!-- ============================================================
+     VIEWPORT & IOS PWA META TAGS
+     ============================================================ -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sign On">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+
+<!-- Manifest (see manifest.json) -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Home screen icon — inline SVG data URI, no external file required -->
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiB2aWV3Qm94PSIwIDAgMTgwIDE4MCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzFjMWMxZSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzAwMDAwMCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiByeD0iNDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjU4JSIgZm9udC1zaXplPSI5MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+4pyI77iPPC90ZXh0Pjwvc3ZnPg==">
+
+<style>
+/* ==================================================================
+   ROOT VARIABLES — Apple-inspired dark palette
+   ================================================================== */
+:root{
+  --bg:               #000000;
+  --glass-bg:         rgba(255,255,255,0.055);
+  --glass-bg-strong:  rgba(255,255,255,0.09);
+  --glass-border:     rgba(255,255,255,0.12);
+  --text-primary:     #ffffff;
+  --text-secondary:   rgba(235,235,245,0.60);
+  --text-tertiary:    rgba(235,235,245,0.38);
+
+  --accent-blue:      #0a84ff;
+  --accent-teal:      #40c8e0;
+  --accent-purple:    #bf5af2;
+  --accent-green:     #30d158;
+  --accent-orange:    #ff9f0a;
+  --accent-red:       #ff453a;
+
+  --radius-lg: 24px;
+  --radius-md: 20px;
+
+  --shadow-card: 0 10px 30px rgba(0,0,0,0.55);
+}
+
+/* ==================================================================
+   RESET
+   ================================================================== */
+*{
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body{
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  height: 100%;
+  overscroll-behavior-y: none;
+}
+
+body{
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  min-height: 100vh;
+  /* Subtle radial glow to avoid a totally flat black canvas, still OLED-true black at the edges */
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(30,60,110,0.35), transparent 60%),
+    var(--bg);
+}
+
+/* ==================================================================
+   LAYOUT
+   ================================================================== */
+.app{
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 18px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: appFadeIn 0.5s ease both;
+}
+
+@keyframes appFadeIn{
+  from{ opacity: 0; transform: translateY(6px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------------
+   HEADER
+   ------------------------------------------------------------------ */
+.app-header{
+  padding: 10px 4px 4px;
+}
+
+.app-title{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-icon{
+  font-size: 34px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+}
+
+.app-title h1{
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.app-subtitle{
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* ------------------------------------------------------------------
+   GLASS CARD BASE
+   ------------------------------------------------------------------ */
+.glass{
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+@media (hover: hover) and (pointer: fine){
+  .glass:hover{
+    transform: translateY(-2px);
+    background: var(--glass-bg-strong);
+  }
+}
+
+/* ------------------------------------------------------------------
+   INPUT SECTION — Native pickers, styled to match the glass theme
+   ------------------------------------------------------------------ */
+.input-section{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.input-card{
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-label{
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* Native <input type="date"> / <input type="time"> re-skinned for dark glass UI */
+.native-input{
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  width: 100%;
+  padding: 2px 0;
+  color-scheme: dark; /* makes the iOS wheel picker render in dark mode */
+}
+
+.native-input::-webkit-calendar-picker-indicator{
+  filter: invert(1);
+  opacity: 0.6;
+}
+
+/* ------------------------------------------------------------------
+   RESULTS GRID — the four big time cards
+   ------------------------------------------------------------------ */
+.results-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.result-card{
+  position: relative;
+  padding: 18px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 118px;
+  overflow: hidden;
+}
+
+/* Thin accent bar along the top of each card, Wallet-pass style */
+.result-card::before{
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.result-card[data-accent="blue"]::before  { background: var(--accent-blue); }
+.result-card[data-accent="teal"]::before  { background: var(--accent-teal); }
+.result-card[data-accent="purple"]::before{ background: var(--accent-purple); }
+.result-card[data-accent="green"]::before { background: var(--accent-green); }
+
+.result-icon{
+  font-size: 22px;
+}
+
+.result-label{
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.result-time{
+  font-size: clamp(30px, 9vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.result-badge{
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent-orange);
+  min-height: 12px;
+}
+
+/* Pulse animation fired whenever a time value changes */
+.pulse{
+  animation: pulseFlash 0.5s ease;
+}
+@keyframes pulseFlash{
+  0%   { opacity: 0.25; transform: scale(0.96); }
+  60%  { opacity: 1;    transform: scale(1.02); }
+  100% { opacity: 1;    transform: scale(1);    }
+}
+
+/* ------------------------------------------------------------------
+   TRAVEL RULE CARD
+   ------------------------------------------------------------------ */
+.rule-card{
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+#ruleIcon{ font-size: 16px; }
+
+/* ------------------------------------------------------------------
+   COUNTDOWN CARD — the key "glanceable" element
+   ------------------------------------------------------------------ */
+.countdown-card{
+  padding: 20px 20px 22px;
+  text-align: center;
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+.countdown-label{
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.countdown-value{
+  font-size: clamp(30px, 10vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* State: plenty of time — calm green tint */
+.countdown-card.state-normal{
+  border-color: rgba(48,209,88,0.35);
+  background: rgba(48,209,88,0.08);
+}
+.countdown-card.state-normal .countdown-value{ color: var(--accent-green); }
+
+/* State: within 30 minutes — orange warning */
+.countdown-card.state-warning{
+  border-color: rgba(255,159,10,0.45);
+  background: rgba(255,159,10,0.10);
+}
+.countdown-card.state-warning .countdown-value{ color: var(--accent-orange); }
+
+/* State: departure passed — red alert */
+.countdown-card.state-passed{
+  border-color: rgba(255,69,58,0.5);
+  background: rgba(255,69,58,0.12);
+}
+.countdown-card.state-passed .countdown-value{ color: var(--accent-red); }
+
+/* ------------------------------------------------------------------
+   FOOTER
+   ------------------------------------------------------------------ */
+.app-footer{
+  text-align: center;
+  padding-top: 6px;
+}
+.app-footer p{
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.02em;
+}
+
+/* ------------------------------------------------------------------
+   SMALL SCREENS (iPhone SE etc.)
+   ------------------------------------------------------------------ */
+@media (max-width: 340px){
+  .result-time{ font-size: 26px; }
+  .app-title h1{ font-size: 24px; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <header class="app-header">
+    <div class="app-title">
+      <span class="app-icon">✈️</span>
+      <div>
+        <h1>Sign On</h1>
+        <p class="app-subtitle">Crew Departure Planner</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       INPUTS — Date + Sign On time (native iOS pickers)
+       ============================================================ -->
+  <section class="input-section">
+    <div class="input-card glass">
+      <label class="input-label" for="dutyDate">Duty Date</label>
+      <input type="date" id="dutyDate" class="native-input">
+    </div>
+    <div class="input-card glass">
+      <label class="input-label" for="signOnTime">Sign On</label>
+      <input type="time" id="signOnTime" class="native-input">
+    </div>
+  </section>
+
+  <!-- ============================================================
+       RESULTS — four large time cards
+       ============================================================ -->
+  <section class="results-grid">
+
+    <div class="result-card glass" data-accent="blue">
+      <div class="result-icon">🏠</div>
+      <div class="result-label">Sair de casa</div>
+      <div class="result-time" id="time-sair">--:--</div>
+      <div class="result-badge" id="badge-sair"></div>
+    </div>
+
+    <div class="result-card glass" data-accent="teal">
+      <div class="result-icon">🚌</div>
+      <div class="result-label">P6</div>
+      <div class="result-time" id="time-p6">--:--</div>
+      <div class="result-badge" id="badge-p6"></div>
+    </div>
+
+    <div class="result-card glass" data-accent="purple">
+      <div class="result-icon">📋</div>
+      <div class="result-label">TTA</div>
+      <div class="result-time" id="time-tta">--:--</div>
+      <div class="result-badge" id="badge-tta"></div>
+    </div>
+
+    <div class="result-card glass" data-accent="green">
+      <div class="result-icon">✈️</div>
+      <div class="result-label">Sign On</div>
+      <div class="result-time" id="time-signon">--:--</div>
+      <div class="result-badge" id="badge-signon"></div>
+    </div>
+
+  </section>
+
+  <!-- ============================================================
+       TRAVEL RULE INDICATOR
+       ============================================================ -->
+  <section class="rule-card glass" id="ruleCard">
+    <span id="ruleIcon">🟢</span>
+    <span id="ruleText">Using 50 minute travel rule</span>
+  </section>
+
+  <!-- ============================================================
+       COUNTDOWN
+       ============================================================ -->
+  <section class="countdown-card glass" id="countdownCard">
+    <div class="countdown-label" id="countdownLabel">Leave home in</div>
+    <div class="countdown-value" id="countdownValue">--</div>
+  </section>
+
+  <footer class="app-footer">
+    <p>Works fully offline · All times local · No data leaves this device</p>
+  </footer>
+
+</div>
+
+<script>
+/* ====================================================================
+   SIGN ON — Crew Departure Planner
+   All logic lives here. No frameworks, no dependencies.
+   ==================================================================== */
+
+/* --------------------------------------------------------------
+   CONSTANTS
+   -------------------------------------------------------------- */
+const STORAGE_KEYS = {
+  date: 'signOnApp_dutyDate',
+  time: 'signOnApp_signOnTime'
+};
+
+const MINUTES_TTA_OFFSET       = 15;  // Sign On - 15 min = TTA
+const MINUTES_P6_OFFSET        = 10;  // TTA - 10 min = P6
+const TRAVEL_MINUTES_LONG      = 50;  // weekday daytime rule
+const TRAVEL_MINUTES_SHORT     = 30;  // all other cases
+const DAYTIME_WINDOW_START_MIN = 7 * 60 + 30;  // 07:30
+const DAYTIME_WINDOW_END_MIN   = 20 * 60;      // 20:00
+const COUNTDOWN_WARNING_MIN    = 30;  // orange threshold
+const LEAVE_NOW_GRACE_MS       = 2 * 60 * 1000; // "Leave now!" grace window after zero
+
+/* --------------------------------------------------------------
+   DOM REFERENCES (populated on DOMContentLoaded)
+   -------------------------------------------------------------- */
+let dutyDateInput, signOnTimeInput;
+let currentSchedule = null;
+
+/* --------------------------------------------------------------
+   SMALL HELPERS
+   -------------------------------------------------------------- */
+
+// Zero-pad a number to two digits.
+function pad(n){
+  return n.toString().padStart(2, '0');
+}
+
+// Format a Date object as "HH:MM" in 24-hour local time.
+function formatTime(date){
+  return pad(date.getHours()) + ':' + pad(date.getMinutes());
+}
+
+// Format a Date object as "YYYY-MM-DD" for populating a <input type="date">.
+function formatDateInputValue(date){
+  return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+}
+
+// Combine a date string ("YYYY-MM-DD") and time string ("HH:MM") into one Date object.
+function combineDateAndTime(dateStr, timeStr){
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hours, minutes]   = timeStr.split(':').map(Number);
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
+}
+
+// Add (or subtract, if negative) minutes to a Date, returning a new Date.
+// Because this operates on true Date arithmetic, midnight wraparound
+// (and even day/month/year rollover) is handled automatically.
+function addMinutes(date, minutes){
+  return new Date(date.getTime() + minutes * 60000);
+}
+
+// True if two Date objects fall on the same calendar day.
+function isSameCalendarDay(a, b){
+  return a.getFullYear() === b.getFullYear()
+      && a.getMonth()    === b.getMonth()
+      && a.getDate()     === b.getDate();
+}
+
+// Returns a small badge label if a computed time falls on a different
+// calendar day than the reference (Sign On) date — e.g. an early-morning
+// Sign On can push "Sair de casa" into the previous day.
+function dayBadgeLabel(resultDate, referenceDate){
+  if (isSameCalendarDay(resultDate, referenceDate)) return '';
+  return resultDate < referenceDate ? 'PREV DAY' : 'NEXT DAY';
+}
+
+// Format a millisecond duration as "Xh Ym" (or just "Ym" under an hour).
+function formatDuration(ms){
+  const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
+  const hours   = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+}
+
+/* --------------------------------------------------------------
+   CORE CALCULATION
+   -------------------------------------------------------------- */
+
+// Given the duty date and Sign On time, compute every downstream time
+// and which travel rule applies.
+function computeSchedule(dutyDateStr, signOnTimeStr){
+  const signOnDate = combineDateAndTime(dutyDateStr, signOnTimeStr);
+  const ttaDate    = addMinutes(signOnDate, -MINUTES_TTA_OFFSET);
+  const p6Date     = addMinutes(ttaDate, -MINUTES_P6_OFFSET);
+
+  // Weekday / weekend is derived from the Sign On date, per spec.
+  const dayOfWeek  = signOnDate.getDay(); // 0 = Sunday ... 6 = Saturday
+  const isWeekday  = dayOfWeek >= 1 && dayOfWeek <= 5;
+
+  // Daytime window check: 07:30–20:00 inclusive.
+  const minutesOfDay   = signOnDate.getHours() * 60 + signOnDate.getMinutes();
+  const inDaytimeWindow = minutesOfDay >= DAYTIME_WINDOW_START_MIN
+                        && minutesOfDay <= DAYTIME_WINDOW_END_MIN;
+
+  const useLongTravelRule = isWeekday && inDaytimeWindow;
+  const travelMinutes     = useLongTravelRule ? TRAVEL_MINUTES_LONG : TRAVEL_MINUTES_SHORT;
+
+  const sairDate = addMinutes(p6Date, -travelMinutes);
+
+  return { signOnDate, ttaDate, p6Date, sairDate, useLongTravelRule, travelMinutes };
+}
+
+/* --------------------------------------------------------------
+   RENDERING
+   -------------------------------------------------------------- */
+
+// Update a single time card's text + day badge, animating only if the
+// displayed value actually changed (avoids animating on every tick).
+function updateTimeCard(timeElId, badgeElId, newDate, referenceDate){
+  const timeEl  = document.getElementById(timeElId);
+  const badgeEl = document.getElementById(badgeElId);
+  const newText = formatTime(newDate);
+
+  if (timeEl.textContent !== newText){
+    timeEl.textContent = newText;
+    // Restart the pulse animation by removing then re-adding the class.
+    timeEl.classList.remove('pulse');
+    void timeEl.offsetWidth; // force reflow so the animation re-triggers
+    timeEl.classList.add('pulse');
+  }
+
+  badgeEl.textContent = dayBadgeLabel(newDate, referenceDate);
+}
+
+// Update the small "travel rule" indicator card.
+function updateRuleCard(schedule){
+  const ruleIcon = document.getElementById('ruleIcon');
+  const ruleText = document.getElementById('ruleText');
+
+  if (schedule.useLongTravelRule){
+    ruleIcon.textContent = '🟢';
+    ruleText.textContent = 'Using 50 minute travel rule';
+  } else {
+    ruleIcon.textContent = '🔵';
+    ruleText.textContent = 'Using 30 minute travel rule';
+  }
+}
+
+// Update the countdown card. Runs independently on a timer so the
+// countdown ticks even when the user isn't touching the inputs.
+function updateCountdown(){
+  if (!currentSchedule) return;
+
+  const card  = document.getElementById('countdownCard');
+  const label = document.getElementById('countdownLabel');
+  const value = document.getElementById('countdownValue');
+
+  const now    = new Date();
+  const diffMs = currentSchedule.sairDate.getTime() - now.getTime();
+
+  card.classList.remove('state-normal', 'state-warning', 'state-passed');
+
+  if (diffMs > COUNTDOWN_WARNING_MIN * 60000){
+    // Plenty of time left.
+    card.classList.add('state-normal');
+    label.textContent = 'Leave home in';
+    value.textContent = formatDuration(diffMs);
+
+  } else if (diffMs > 0){
+    // Inside the 30-minute warning window.
+    card.classList.add('state-warning');
+    label.textContent = 'Leave home in';
+    value.textContent = formatDuration(diffMs);
+
+  } else if (diffMs > -LEAVE_NOW_GRACE_MS){
+    // Just passed departure time — urgent, short grace period.
+    card.classList.add('state-passed');
+    label.textContent = '';
+    value.textContent = 'Leave now!';
+
+  } else {
+    // Well past departure.
+    card.classList.add('state-passed');
+    label.textContent = '';
+    value.textContent = 'Departure time has passed.';
+  }
+}
+
+// Full re-render: recompute schedule from current input values, update
+// every card, persist to localStorage, and refresh the countdown.
+function render(){
+  const dutyDateStr    = dutyDateInput.value;
+  const signOnTimeStr  = signOnTimeInput.value;
+
+  if (!dutyDateStr || !signOnTimeStr) return;
+
+  // Persist selections so they're restored next launch.
+  localStorage.setItem(STORAGE_KEYS.date, dutyDateStr);
+  localStorage.setItem(STORAGE_KEYS.time, signOnTimeStr);
+
+  currentSchedule = computeSchedule(dutyDateStr, signOnTimeStr);
+  const s = currentSchedule;
+
+  updateTimeCard('time-signon', 'badge-signon', s.signOnDate, s.signOnDate);
+  updateTimeCard('time-tta',    'badge-tta',    s.ttaDate,    s.signOnDate);
+  updateTimeCard('time-p6',     'badge-p6',     s.p6Date,     s.signOnDate);
+  updateTimeCard('time-sair',   'badge-sair',   s.sairDate,   s.signOnDate);
+
+  updateRuleCard(s);
+  updateCountdown();
+}
+
+/* --------------------------------------------------------------
+   PERSISTENCE / INITIAL STATE
+   -------------------------------------------------------------- */
+
+// Restore last-used date & time from localStorage, or default to "now".
+function restoreOrDefaultInputs(){
+  const now = new Date();
+  const storedDate = localStorage.getItem(STORAGE_KEYS.date);
+  const storedTime = localStorage.getItem(STORAGE_KEYS.time);
+
+  dutyDateInput.value   = storedDate || formatDateInputValue(now);
+  signOnTimeInput.value = storedTime || formatTime(now);
+}
+
+/* --------------------------------------------------------------
+   BOOTSTRAP
+   -------------------------------------------------------------- */
+document.addEventListener('DOMContentLoaded', () => {
+  dutyDateInput   = document.getElementById('dutyDate');
+  signOnTimeInput = document.getElementById('signOnTime');
+
+  restoreOrDefaultInputs();
+  render();
+
+  // Recalculate instantly on any input change — no Calculate button.
+  dutyDateInput.addEventListener('input', render);
+  signOnTimeInput.addEventListener('input', render);
+
+  // Keep the countdown ticking every second even without input changes.
+  setInterval(updateCountdown, 1000);
+
+  // Register the service worker for offline support (see service-worker.js).
+  // This silently no-ops if served over file:// or without HTTPS/localhost.
+  if ('serviceWorker' in navigator){
+    navigator.serviceWorker.register('service-worker.js').catch(() => {
+      /* Offline-first app still works without the SW; this is best-effort. */
+    });
+  }
+});
+</script>
+</body>
+</html>

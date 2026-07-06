@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Sign On</title>
+<title>Pre Flight TAP</title>
 
 <!-- ============================================================
      VIEWPORT & IOS PWA META TAGS
@@ -10,21 +10,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Sign On">
+<meta name="apple-mobile-web-app-title" content="Pre Flight TAP">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
 <meta name="format-detection" content="telephone=no">
 
-<!-- Manifest (see manifest.json) -->
 <link rel="manifest" href="manifest.json">
 
-<!-- Home screen icon — inline SVG data URI, no external file required -->
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiB2aWV3Qm94PSIwIDAgMTgwIDE4MCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzFjMWMxZSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzAwMDAwMCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiByeD0iNDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjU4JSIgZm9udC1zaXplPSI5MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+4pyI77iPPC90ZXh0Pjwvc3ZnPg==">
 
 <style>
 /* ==================================================================
-   ROOT VARIABLES — Apple-inspired dark palette
+   ROOT VARIABLES
    ================================================================== */
 :root{
   --bg:               #000000;
@@ -41,16 +39,15 @@
   --accent-green:     #30d158;
   --accent-orange:    #ff9f0a;
   --accent-red:       #ff453a;
+  --accent-gold:      #ffd60a;
 
   --radius-lg: 24px;
   --radius-md: 20px;
 
   --shadow-card: 0 10px 30px rgba(0,0,0,0.55);
+  --tab-bar-height: 78px;
 }
 
-/* ==================================================================
-   RESET
-   ================================================================== */
 *{
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -68,9 +65,7 @@ html, body{
 body{
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   min-height: 100vh;
-  /* Subtle radial glow to avoid a totally flat black canvas, still OLED-true black at the edges */
   background:
     radial-gradient(ellipse 120% 60% at 50% -10%, rgba(30,60,110,0.35), transparent 60%),
     var(--bg);
@@ -82,23 +77,17 @@ body{
 .app{
   max-width: 520px;
   margin: 0 auto;
-  padding: 18px 16px 40px;
+  padding: calc(env(safe-area-inset-top) + 14px) 16px calc(var(--tab-bar-height) + env(safe-area-inset-bottom) + 24px);
   display: flex;
   flex-direction: column;
   gap: 16px;
-  animation: appFadeIn 0.5s ease both;
-}
-
-@keyframes appFadeIn{
-  from{ opacity: 0; transform: translateY(6px); }
-  to{ opacity: 1; transform: translateY(0); }
 }
 
 /* ------------------------------------------------------------------
-   HEADER
+   HEADER (persistent across tabs)
    ------------------------------------------------------------------ */
 .app-header{
-  padding: 10px 4px 4px;
+  padding: 6px 4px 4px;
 }
 
 .app-title{
@@ -108,21 +97,21 @@ body{
 }
 
 .app-icon{
-  font-size: 34px;
+  font-size: 32px;
   line-height: 1;
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
 }
 
 .app-title h1{
   margin: 0;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .app-subtitle{
   margin: 2px 0 0;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -150,7 +139,24 @@ body{
 }
 
 /* ------------------------------------------------------------------
-   INPUT SECTION — Native pickers, styled to match the glass theme
+   VIEWS — only one visible at a time
+   ------------------------------------------------------------------ */
+.view{
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+.view.active{
+  display: flex;
+  animation: viewFadeIn 0.35s ease both;
+}
+@keyframes viewFadeIn{
+  from{ opacity: 0; transform: translateY(8px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------------
+   PLANNER INPUTS
    ------------------------------------------------------------------ */
 .input-section{
   display: grid;
@@ -173,7 +179,6 @@ body{
   color: var(--text-tertiary);
 }
 
-/* Native <input type="date"> / <input type="time"> re-skinned for dark glass UI */
 .native-input{
   appearance: none;
   -webkit-appearance: none;
@@ -186,7 +191,7 @@ body{
   font-variant-numeric: tabular-nums;
   width: 100%;
   padding: 2px 0;
-  color-scheme: dark; /* makes the iOS wheel picker render in dark mode */
+  color-scheme: dark;
 }
 
 .native-input::-webkit-calendar-picker-indicator{
@@ -194,12 +199,9 @@ body{
   opacity: 0.6;
 }
 
-/* Wrapper positions a custom chevron over native <select> elements,
-   since select styling can't be fully reset the way inputs can. */
 .select-wrapper{
   position: relative;
 }
-
 .select-wrapper::after{
   content: "⌄";
   position: absolute;
@@ -210,20 +212,17 @@ body{
   color: var(--text-tertiary);
   pointer-events: none;
 }
-
 .native-select{
   padding-right: 20px;
   cursor: pointer;
 }
-
-/* Style the dropdown popover itself in dark mode where supported (iOS Safari). */
 .native-select option{
   background: #1c1c1e;
   color: var(--text-primary);
 }
 
 /* ------------------------------------------------------------------
-   RESULTS GRID — the four big time cards
+   RESULTS GRID
    ------------------------------------------------------------------ */
 .results-grid{
   display: grid;
@@ -241,7 +240,6 @@ body{
   overflow: hidden;
 }
 
-/* Thin accent bar along the top of each card, Wallet-pass style */
 .result-card::before{
   content: "";
   position: absolute;
@@ -254,9 +252,7 @@ body{
 .result-card[data-accent="purple"]::before{ background: var(--accent-purple); }
 .result-card[data-accent="green"]::before { background: var(--accent-green); }
 
-.result-icon{
-  font-size: 22px;
-}
+.result-icon{ font-size: 22px; }
 
 .result-label{
   font-size: 13px;
@@ -280,19 +276,13 @@ body{
   min-height: 12px;
 }
 
-/* Pulse animation fired whenever a time value changes */
-.pulse{
-  animation: pulseFlash 0.5s ease;
-}
+.pulse{ animation: pulseFlash 0.5s ease; }
 @keyframes pulseFlash{
   0%   { opacity: 0.25; transform: scale(0.96); }
   60%  { opacity: 1;    transform: scale(1.02); }
   100% { opacity: 1;    transform: scale(1);    }
 }
 
-/* ------------------------------------------------------------------
-   TRAVEL RULE CARD
-   ------------------------------------------------------------------ */
 .rule-card{
   padding: 12px 16px;
   display: flex;
@@ -302,18 +292,13 @@ body{
   font-weight: 600;
   color: var(--text-secondary);
 }
-
 #ruleIcon{ font-size: 16px; }
 
-/* ------------------------------------------------------------------
-   COUNTDOWN CARD — the key "glanceable" element
-   ------------------------------------------------------------------ */
 .countdown-card{
   padding: 20px 20px 22px;
   text-align: center;
   transition: background 0.4s ease, border-color 0.4s ease;
 }
-
 .countdown-label{
   font-size: 13px;
   font-weight: 600;
@@ -321,34 +306,143 @@ body{
   color: var(--text-secondary);
   margin-bottom: 4px;
 }
-
 .countdown-value{
   font-size: clamp(30px, 10vw, 42px);
   font-weight: 800;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
-
-/* State: plenty of time — calm green tint */
 .countdown-card.state-normal{
   border-color: rgba(48,209,88,0.35);
   background: rgba(48,209,88,0.08);
 }
 .countdown-card.state-normal .countdown-value{ color: var(--accent-green); }
-
-/* State: within 30 minutes — orange warning */
 .countdown-card.state-warning{
   border-color: rgba(255,159,10,0.45);
   background: rgba(255,159,10,0.10);
 }
 .countdown-card.state-warning .countdown-value{ color: var(--accent-orange); }
-
-/* State: departure passed — red alert */
 .countdown-card.state-passed{
   border-color: rgba(255,69,58,0.5);
   background: rgba(255,69,58,0.12);
 }
 .countdown-card.state-passed .countdown-value{ color: var(--accent-red); }
+
+/* ------------------------------------------------------------------
+   CHECKLISTS (Briefcase / Overnights)
+   ------------------------------------------------------------------ */
+.checklist-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px;
+}
+
+.checklist-title-group h2{
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.checklist-progress{
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.reset-btn{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-secondary);
+  font-size: 17px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+.reset-btn:active{
+  transform: scale(0.92);
+  background: var(--glass-bg-strong);
+}
+
+/* Slim progress bar under the header */
+.progress-track{
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.progress-fill{
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-gold), #ffb300);
+  transition: width 0.35s ease;
+  width: 0%;
+}
+
+.checklist-items{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checklist-item{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.check-circle{
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: transparent;
+  background: rgba(255,255,255,0.03);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.checklist-item.checked .check-circle{
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: #1c1c00;
+  transform: scale(1.05);
+}
+
+.item-label{
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: color 0.2s ease;
+  line-height: 1.3;
+}
+
+.checklist-item.checked .item-label{
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-tertiary);
+}
+
+.checklist-item:active{
+  background: var(--glass-bg-strong);
+}
 
 /* ------------------------------------------------------------------
    FOOTER
@@ -365,11 +459,54 @@ body{
 }
 
 /* ------------------------------------------------------------------
-   SMALL SCREENS (iPhone SE etc.)
+   BOTTOM TAB BAR
+   ------------------------------------------------------------------ */
+.tab-bar{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: rgba(20,20,22,0.72);
+  border-top: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(160%);
+  z-index: 100;
+}
+
+.tab-btn{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 0 8px;
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  font-family: inherit;
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.tab-btn:active{ transform: scale(0.94); }
+
+.tab-icon{ font-size: 22px; line-height: 1; }
+.tab-label{
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.tab-btn.active{ color: var(--accent-blue); }
+
+/* ------------------------------------------------------------------
+   SMALL SCREENS
    ------------------------------------------------------------------ */
 @media (max-width: 340px){
   .result-time{ font-size: 26px; }
-  .app-title h1{ font-size: 24px; }
+  .app-title h1{ font-size: 22px; }
 }
 </style>
 </head>
@@ -378,122 +515,286 @@ body{
 <div class="app">
 
   <!-- ============================================================
-       HEADER
+       HEADER (shown above every tab)
        ============================================================ -->
   <header class="app-header">
     <div class="app-title">
-      <span class="app-icon">✈️</span>
+      <span class="app-icon">🛫</span>
       <div>
-        <h1>Sign On</h1>
-        <p class="app-subtitle">Crew Departure Planner</p>
+        <h1>Pre Flight TAP</h1>
+        <p class="app-subtitle">Crew Ops Toolkit</p>
       </div>
     </div>
   </header>
 
   <!-- ============================================================
-       INPUTS — Date + Sign On time (native iOS pickers)
+       VIEW 1 — DEPARTURE PLANNER
        ============================================================ -->
-  <section class="input-section">
-    <div class="input-card glass">
-      <label class="input-label" for="dutyDate">Duty Date</label>
-      <input type="date" id="dutyDate" class="native-input">
-    </div>
-    <div class="input-card glass">
-      <label class="input-label" for="signOnTime">Sign On</label>
-      <input type="time" id="signOnTime" class="native-input">
-    </div>
+  <div class="view active" id="view-planner">
 
-    <!-- Travel time override: Auto follows the weekday/window rule below,
-         or the crew member can pin it to 30 or 50 minutes manually. -->
-    <div class="input-card glass">
-      <label class="input-label" for="travelOverride">Travel Time</label>
-      <div class="select-wrapper">
-        <select id="travelOverride" class="native-input native-select">
-          <option value="auto">Auto</option>
-          <option value="30">30 min</option>
-          <option value="50">50 min</option>
-        </select>
+    <section class="input-section">
+      <div class="input-card glass">
+        <label class="input-label" for="dutyDate">Duty Date</label>
+        <input type="date" id="dutyDate" class="native-input">
       </div>
-    </div>
-
-    <!-- Gap between TTA and Sign On: defaults to 15 min, can be reduced to 10. -->
-    <div class="input-card glass">
-      <label class="input-label" for="ttaOffset">TTA Gap</label>
-      <div class="select-wrapper">
-        <select id="ttaOffset" class="native-input native-select">
-          <option value="15">15 min</option>
-          <option value="10">10 min</option>
-        </select>
+      <div class="input-card glass">
+        <label class="input-label" for="signOnTime">Sign On</label>
+        <input type="time" id="signOnTime" class="native-input">
       </div>
-    </div>
-  </section>
+
+      <div class="input-card glass">
+        <label class="input-label" for="travelOverride">Travel Time</label>
+        <div class="select-wrapper">
+          <select id="travelOverride" class="native-input native-select">
+            <option value="auto">Auto</option>
+            <option value="30">30 min</option>
+            <option value="50">50 min</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-card glass">
+        <label class="input-label" for="ttaOffset">TTA Gap</label>
+        <div class="select-wrapper">
+          <select id="ttaOffset" class="native-input native-select">
+            <option value="15">15 min</option>
+            <option value="10">10 min</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="results-grid">
+      <div class="result-card glass" data-accent="blue">
+        <div class="result-icon">🏠</div>
+        <div class="result-label">Sair de casa</div>
+        <div class="result-time" id="time-sair">--:--</div>
+        <div class="result-badge" id="badge-sair"></div>
+      </div>
+
+      <div class="result-card glass" data-accent="teal">
+        <div class="result-icon">🚌</div>
+        <div class="result-label">P6</div>
+        <div class="result-time" id="time-p6">--:--</div>
+        <div class="result-badge" id="badge-p6"></div>
+      </div>
+
+      <div class="result-card glass" data-accent="purple">
+        <div class="result-icon">📋</div>
+        <div class="result-label">TTA</div>
+        <div class="result-time" id="time-tta">--:--</div>
+        <div class="result-badge" id="badge-tta"></div>
+      </div>
+
+      <div class="result-card glass" data-accent="green">
+        <div class="result-icon">✈️</div>
+        <div class="result-label">Sign On</div>
+        <div class="result-time" id="time-signon">--:--</div>
+        <div class="result-badge" id="badge-signon"></div>
+      </div>
+    </section>
+
+    <section class="rule-card glass" id="ruleCard">
+      <span id="ruleIcon">🟢</span>
+      <span id="ruleText">Using 50 minute travel rule</span>
+    </section>
+
+    <section class="countdown-card glass" id="countdownCard">
+      <div class="countdown-label" id="countdownLabel">Leave home in</div>
+      <div class="countdown-value" id="countdownValue">--</div>
+    </section>
+
+  </div>
 
   <!-- ============================================================
-       RESULTS — four large time cards
+       VIEW 2 — BRIEFCASE CHECKLIST
        ============================================================ -->
-  <section class="results-grid">
-
-    <div class="result-card glass" data-accent="blue">
-      <div class="result-icon">🏠</div>
-      <div class="result-label">Sair de casa</div>
-      <div class="result-time" id="time-sair">--:--</div>
-      <div class="result-badge" id="badge-sair"></div>
+  <div class="view" id="view-briefcase">
+    <div class="checklist-header">
+      <div class="checklist-title-group">
+        <h2>💼 Briefcase</h2>
+        <p class="checklist-progress" id="progress-briefcase">0 of 0 packed</p>
+      </div>
+      <button class="reset-btn" id="reset-briefcase" title="Reset checklist">↺</button>
     </div>
-
-    <div class="result-card glass" data-accent="teal">
-      <div class="result-icon">🚌</div>
-      <div class="result-label">P6</div>
-      <div class="result-time" id="time-p6">--:--</div>
-      <div class="result-badge" id="badge-p6"></div>
-    </div>
-
-    <div class="result-card glass" data-accent="purple">
-      <div class="result-icon">📋</div>
-      <div class="result-label">TTA</div>
-      <div class="result-time" id="time-tta">--:--</div>
-      <div class="result-badge" id="badge-tta"></div>
-    </div>
-
-    <div class="result-card glass" data-accent="green">
-      <div class="result-icon">✈️</div>
-      <div class="result-label">Sign On</div>
-      <div class="result-time" id="time-signon">--:--</div>
-      <div class="result-badge" id="badge-signon"></div>
-    </div>
-
-  </section>
+    <div class="progress-track"><div class="progress-fill" id="progressFill-briefcase"></div></div>
+    <div class="checklist-items" id="items-briefcase"></div>
+  </div>
 
   <!-- ============================================================
-       TRAVEL RULE INDICATOR
+       VIEW 3 — OVERNIGHTS CHECKLIST
        ============================================================ -->
-  <section class="rule-card glass" id="ruleCard">
-    <span id="ruleIcon">🟢</span>
-    <span id="ruleText">Using 50 minute travel rule</span>
-  </section>
-
-  <!-- ============================================================
-       COUNTDOWN
-       ============================================================ -->
-  <section class="countdown-card glass" id="countdownCard">
-    <div class="countdown-label" id="countdownLabel">Leave home in</div>
-    <div class="countdown-value" id="countdownValue">--</div>
-  </section>
+  <div class="view" id="view-overnights">
+    <div class="checklist-header">
+      <div class="checklist-title-group">
+        <h2>🌙 Overnights</h2>
+        <p class="checklist-progress" id="progress-overnights">0 of 0 packed</p>
+      </div>
+      <button class="reset-btn" id="reset-overnights" title="Reset checklist">↺</button>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill-overnights"></div></div>
+    <div class="checklist-items" id="items-overnights"></div>
+  </div>
 
   <footer class="app-footer">
-    <p>Works fully offline · All times local · No data leaves this device</p>
+    <p>Works fully offline · All data stays on this device</p>
   </footer>
 
 </div>
 
+<!-- ============================================================
+     BOTTOM TAB BAR
+     ============================================================ -->
+<nav class="tab-bar">
+  <button class="tab-btn active" data-view="planner">
+    <span class="tab-icon">🛫</span>
+    <span class="tab-label">Planner</span>
+  </button>
+  <button class="tab-btn" data-view="briefcase">
+    <span class="tab-icon">💼</span>
+    <span class="tab-label">Briefcase</span>
+  </button>
+  <button class="tab-btn" data-view="overnights">
+    <span class="tab-icon">🌙</span>
+    <span class="tab-label">Overnights</span>
+  </button>
+</nav>
+
 <script>
 /* ====================================================================
-   SIGN ON — Crew Departure Planner
-   All logic lives here. No frameworks, no dependencies.
+   PRE FLIGHT TAP
+   Single-file offline app: Departure Planner + two packing checklists.
    ==================================================================== */
 
-/* --------------------------------------------------------------
-   CONSTANTS
-   -------------------------------------------------------------- */
+/* ================================================================
+   TAB NAVIGATION
+   ================================================================ */
+const LAST_VIEW_KEY = 'preflighttap_lastView';
+
+function showView(viewName){
+  document.querySelectorAll('.view').forEach((el) => {
+    el.classList.toggle('active', el.id === `view-${viewName}`);
+  });
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.view === viewName);
+  });
+  localStorage.setItem(LAST_VIEW_KEY, viewName);
+}
+
+function initTabBar(){
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => showView(btn.dataset.view));
+  });
+  const savedView = localStorage.getItem(LAST_VIEW_KEY) || 'planner';
+  showView(savedView);
+}
+
+/* ================================================================
+   CHECKLISTS — Briefcase & Overnights
+   ================================================================ */
+
+// Exact items transcribed from the crew's existing Notes checklists.
+const CHECKLIST_DATA = {
+  briefcase: [
+    'Headset', 'Licence', 'Medical Certificate', 'Flashlight',
+    'Glasses (normal)', 'Contact lenses + case', 'Sun glasses (normal + graduação)',
+    'EFB and charger', 'Passport / CC', 'Medication', 'Pen', 'Vest', 'Blazer',
+    'Hat', 'Wallet', 'TAP crew card', 'Watch', 'Snacks / Refeições',
+    'Chapéu chuva', 'Gravata', 'Galões', 'Cartão P6'
+  ],
+  overnights: [
+    'Carregadores iPhone / Apple Watch / iPad', 'T-shirt dormir',
+    'Calças/calções, t-shirt, camisola, tenis', 'Casaco', 'Roupa gym + tenis/meias',
+    'Calções banho / chinelos', 'Roupa interior', 'Camisas farda',
+    'Bolsa higiene (c/escova cabelo)', 'Máquinas barba', 'AirPods', 'iPad',
+    'Comando PS5', 'Pala/tampões ouvidos p/ dormir', 'Refeições'
+  ]
+};
+
+// Turn item text into a stable, storage-safe key (lowercase, no accents/punctuation).
+function slugify(text){
+  return text
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip accents
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+// Load the saved checked-state map for a given list ("briefcase"/"overnights").
+function loadChecklistState(listName){
+  try{
+    const raw = localStorage.getItem(`preflighttap_checklist_${listName}`);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e){
+    return {};
+  }
+}
+
+function saveChecklistState(listName, state){
+  localStorage.setItem(`preflighttap_checklist_${listName}`, JSON.stringify(state));
+}
+
+// Build the DOM rows for a checklist and wire up tap-to-toggle behaviour.
+function renderChecklist(listName){
+  const items = CHECKLIST_DATA[listName];
+  const container = document.getElementById(`items-${listName}`);
+  const state = loadChecklistState(listName);
+
+  container.innerHTML = ''; // clear before rebuilding
+
+  items.forEach((label) => {
+    const key = slugify(label);
+    const row = document.createElement('div');
+    row.className = 'checklist-item glass' + (state[key] ? ' checked' : '');
+    row.dataset.key = key;
+    row.innerHTML = `<span class="check-circle">✓</span><span class="item-label"></span>`;
+    row.querySelector('.item-label').textContent = label;
+
+    row.addEventListener('click', () => {
+      const currentState = loadChecklistState(listName);
+      currentState[key] = !currentState[key];
+      saveChecklistState(listName, currentState);
+      row.classList.toggle('checked', currentState[key]);
+      updateChecklistProgress(listName);
+    });
+
+    container.appendChild(row);
+  });
+
+  updateChecklistProgress(listName);
+}
+
+// Update the "X of Y packed" label and the slim progress bar for a list.
+function updateChecklistProgress(listName){
+  const items = CHECKLIST_DATA[listName];
+  const state = loadChecklistState(listName);
+  const total = items.length;
+  const checkedCount = items.reduce((count, label) => {
+    return count + (state[slugify(label)] ? 1 : 0);
+  }, 0);
+
+  document.getElementById(`progress-${listName}`).textContent =
+    `${checkedCount} of ${total} packed`;
+
+  const pct = total === 0 ? 0 : Math.round((checkedCount / total) * 100);
+  document.getElementById(`progressFill-${listName}`).style.width = `${pct}%`;
+}
+
+// Reset button: clears all checks for a list, with a simple confirm so a
+// stray tap before a flight doesn't wipe an in-progress pack.
+function initResetButton(listName){
+  document.getElementById(`reset-${listName}`).addEventListener('click', () => {
+    const confirmed = window.confirm(`Reset the ${listName} checklist? This will uncheck every item.`);
+    if (!confirmed) return;
+    saveChecklistState(listName, {});
+    renderChecklist(listName);
+  });
+}
+
+/* ================================================================
+   DEPARTURE PLANNER (unchanged calculation logic)
+   ================================================================ */
+
 const STORAGE_KEYS = {
   date:           'signOnApp_dutyDate',
   time:           'signOnApp_signOnTime',
@@ -501,76 +802,40 @@ const STORAGE_KEYS = {
   ttaOffset:      'signOnApp_ttaOffset'
 };
 
-const MINUTES_P6_OFFSET      = 10;  // TTA - 10 min = P6 (fixed, not user-configurable)
-const TRAVEL_MINUTES_LONG    = 50;  // auto rule inside the two windows below
-const TRAVEL_MINUTES_SHORT   = 30;  // auto rule everywhere else
-const DEFAULT_TTA_OFFSET_MIN = 15;  // default gap between TTA and Sign On
+const MINUTES_P6_OFFSET      = 10;
+const TRAVEL_MINUTES_LONG    = 50;
+const TRAVEL_MINUTES_SHORT   = 30;
+const DEFAULT_TTA_OFFSET_MIN = 15;
 
-// Two weekday windows that trigger the automatic 50-minute travel rule.
-// Outside these windows (or on weekends) the automatic rule is 30 minutes.
-const AUTO_WINDOW_1_START_MIN = 8 * 60;         // 08:00
-const AUTO_WINDOW_1_END_MIN   = 10 * 60;        // 10:00
-const AUTO_WINDOW_2_START_MIN = 17 * 60;        // 17:00
-const AUTO_WINDOW_2_END_MIN   = 20 * 60 + 30;   // 20:30
+const AUTO_WINDOW_1_START_MIN = 8 * 60;
+const AUTO_WINDOW_1_END_MIN   = 10 * 60;
+const AUTO_WINDOW_2_START_MIN = 17 * 60;
+const AUTO_WINDOW_2_END_MIN   = 20 * 60 + 30;
 
-const COUNTDOWN_WARNING_MIN    = 30;  // orange threshold
-const LEAVE_NOW_GRACE_MS       = 2 * 60 * 1000; // "Leave now!" grace window after zero
+const COUNTDOWN_WARNING_MIN = 30;
+const LEAVE_NOW_GRACE_MS    = 2 * 60 * 1000;
 
-/* --------------------------------------------------------------
-   DOM REFERENCES (populated on DOMContentLoaded)
-   -------------------------------------------------------------- */
 let dutyDateInput, signOnTimeInput, travelOverrideSelect, ttaOffsetSelect;
 let currentSchedule = null;
 
-/* --------------------------------------------------------------
-   SMALL HELPERS
-   -------------------------------------------------------------- */
-
-// Zero-pad a number to two digits.
-function pad(n){
-  return n.toString().padStart(2, '0');
-}
-
-// Format a Date object as "HH:MM" in 24-hour local time.
-function formatTime(date){
-  return pad(date.getHours()) + ':' + pad(date.getMinutes());
-}
-
-// Format a Date object as "YYYY-MM-DD" for populating a <input type="date">.
+function pad(n){ return n.toString().padStart(2, '0'); }
+function formatTime(date){ return pad(date.getHours()) + ':' + pad(date.getMinutes()); }
 function formatDateInputValue(date){
   return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
 }
-
-// Combine a date string ("YYYY-MM-DD") and time string ("HH:MM") into one Date object.
 function combineDateAndTime(dateStr, timeStr){
   const [year, month, day] = dateStr.split('-').map(Number);
   const [hours, minutes]   = timeStr.split(':').map(Number);
   return new Date(year, month - 1, day, hours, minutes, 0, 0);
 }
-
-// Add (or subtract, if negative) minutes to a Date, returning a new Date.
-// Because this operates on true Date arithmetic, midnight wraparound
-// (and even day/month/year rollover) is handled automatically.
-function addMinutes(date, minutes){
-  return new Date(date.getTime() + minutes * 60000);
-}
-
-// True if two Date objects fall on the same calendar day.
+function addMinutes(date, minutes){ return new Date(date.getTime() + minutes * 60000); }
 function isSameCalendarDay(a, b){
-  return a.getFullYear() === b.getFullYear()
-      && a.getMonth()    === b.getMonth()
-      && a.getDate()     === b.getDate();
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
-
-// Returns a small badge label if a computed time falls on a different
-// calendar day than the reference (Sign On) date — e.g. an early-morning
-// Sign On can push "Sair de casa" into the previous day.
 function dayBadgeLabel(resultDate, referenceDate){
   if (isSameCalendarDay(resultDate, referenceDate)) return '';
   return resultDate < referenceDate ? 'PREV DAY' : 'NEXT DAY';
 }
-
-// Format a millisecond duration as "Xh Ym" (or just "Ym" under an hour).
 function formatDuration(ms){
   const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
   const hours   = Math.floor(totalMinutes / 60);
@@ -578,24 +843,14 @@ function formatDuration(ms){
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 }
 
-/* --------------------------------------------------------------
-   CORE CALCULATION
-   -------------------------------------------------------------- */
-
-// Given the duty date, Sign On time, a travel-time override ('auto', '30',
-// or '50'), and the TTA-to-Sign-On gap in minutes, compute every downstream
-// time and which travel rule applies.
 function computeSchedule(dutyDateStr, signOnTimeStr, travelOverride, ttaOffsetMinutes){
   const signOnDate = combineDateAndTime(dutyDateStr, signOnTimeStr);
   const ttaDate    = addMinutes(signOnDate, -ttaOffsetMinutes);
   const p6Date     = addMinutes(ttaDate, -MINUTES_P6_OFFSET);
 
-  // Weekday / weekend is derived from the Sign On date, per spec.
-  const dayOfWeek  = signOnDate.getDay(); // 0 = Sunday ... 6 = Saturday
+  const dayOfWeek  = signOnDate.getDay();
   const isWeekday  = dayOfWeek >= 1 && dayOfWeek <= 5;
 
-  // Two daytime windows trigger the automatic 50-minute rule on weekdays:
-  // 08:00–10:00 and 17:00–20:30, both inclusive.
   const minutesOfDay = signOnDate.getHours() * 60 + signOnDate.getMinutes();
   const inWindow1 = minutesOfDay >= AUTO_WINDOW_1_START_MIN && minutesOfDay <= AUTO_WINDOW_1_END_MIN;
   const inWindow2 = minutesOfDay >= AUTO_WINDOW_2_START_MIN && minutesOfDay <= AUTO_WINDOW_2_END_MIN;
@@ -603,25 +858,15 @@ function computeSchedule(dutyDateStr, signOnTimeStr, travelOverride, ttaOffsetMi
   const autoUsesLongRule = isWeekday && (inWindow1 || inWindow2);
   const autoTravelMinutes = autoUsesLongRule ? TRAVEL_MINUTES_LONG : TRAVEL_MINUTES_SHORT;
 
-  // A manual override (30 or 50) takes precedence over the automatic rule.
   const isManualOverride = travelOverride !== 'auto';
   const travelMinutes    = isManualOverride ? parseInt(travelOverride, 10) : autoTravelMinutes;
   const useLongTravelRule = travelMinutes === TRAVEL_MINUTES_LONG;
 
   const sairDate = addMinutes(p6Date, -travelMinutes);
 
-  return {
-    signOnDate, ttaDate, p6Date, sairDate,
-    useLongTravelRule, travelMinutes, isManualOverride
-  };
+  return { signOnDate, ttaDate, p6Date, sairDate, useLongTravelRule, travelMinutes, isManualOverride };
 }
 
-/* --------------------------------------------------------------
-   RENDERING
-   -------------------------------------------------------------- */
-
-// Update a single time card's text + day badge, animating only if the
-// displayed value actually changed (avoids animating on every tick).
 function updateTimeCard(timeElId, badgeElId, newDate, referenceDate){
   const timeEl  = document.getElementById(timeElId);
   const badgeEl = document.getElementById(badgeElId);
@@ -629,17 +874,13 @@ function updateTimeCard(timeElId, badgeElId, newDate, referenceDate){
 
   if (timeEl.textContent !== newText){
     timeEl.textContent = newText;
-    // Restart the pulse animation by removing then re-adding the class.
     timeEl.classList.remove('pulse');
-    void timeEl.offsetWidth; // force reflow so the animation re-triggers
+    void timeEl.offsetWidth;
     timeEl.classList.add('pulse');
   }
-
   badgeEl.textContent = dayBadgeLabel(newDate, referenceDate);
 }
 
-// Update the small "travel rule" indicator card. Shows a distinct purple
-// marker when the crew member has manually overridden the automatic rule.
 function updateRuleCard(schedule){
   const ruleIcon = document.getElementById('ruleIcon');
   const ruleText = document.getElementById('ruleText');
@@ -657,8 +898,6 @@ function updateRuleCard(schedule){
   }
 }
 
-// Update the countdown card. Runs independently on a timer so the
-// countdown ticks even when the user isn't touching the inputs.
 function updateCountdown(){
   if (!currentSchedule) return;
 
@@ -672,42 +911,32 @@ function updateCountdown(){
   card.classList.remove('state-normal', 'state-warning', 'state-passed');
 
   if (diffMs > COUNTDOWN_WARNING_MIN * 60000){
-    // Plenty of time left.
     card.classList.add('state-normal');
     label.textContent = 'Leave home in';
     value.textContent = formatDuration(diffMs);
-
   } else if (diffMs > 0){
-    // Inside the 30-minute warning window.
     card.classList.add('state-warning');
     label.textContent = 'Leave home in';
     value.textContent = formatDuration(diffMs);
-
   } else if (diffMs > -LEAVE_NOW_GRACE_MS){
-    // Just passed departure time — urgent, short grace period.
     card.classList.add('state-passed');
     label.textContent = '';
     value.textContent = 'Leave now!';
-
   } else {
-    // Well past departure.
     card.classList.add('state-passed');
     label.textContent = '';
     value.textContent = 'Departure time has passed.';
   }
 }
 
-// Full re-render: recompute schedule from current input values, update
-// every card, persist to localStorage, and refresh the countdown.
 function render(){
   const dutyDateStr    = dutyDateInput.value;
   const signOnTimeStr  = signOnTimeInput.value;
-  const travelOverride = travelOverrideSelect.value;        // 'auto' | '30' | '50'
-  const ttaOffsetMin   = parseInt(ttaOffsetSelect.value, 10); // 15 | 10
+  const travelOverride = travelOverrideSelect.value;
+  const ttaOffsetMin   = parseInt(ttaOffsetSelect.value, 10);
 
   if (!dutyDateStr || !signOnTimeStr) return;
 
-  // Persist selections so they're restored next launch.
   localStorage.setItem(STORAGE_KEYS.date, dutyDateStr);
   localStorage.setItem(STORAGE_KEYS.time, signOnTimeStr);
   localStorage.setItem(STORAGE_KEYS.travelOverride, travelOverride);
@@ -725,11 +954,6 @@ function render(){
   updateCountdown();
 }
 
-/* --------------------------------------------------------------
-   PERSISTENCE / INITIAL STATE
-   -------------------------------------------------------------- */
-
-// Restore last-used date & time from localStorage, or default to "now".
 function restoreOrDefaultInputs(){
   const now = new Date();
   const storedDate           = localStorage.getItem(STORAGE_KEYS.date);
@@ -743,10 +967,11 @@ function restoreOrDefaultInputs(){
   ttaOffsetSelect.value      = storedTtaOffset || String(DEFAULT_TTA_OFFSET_MIN);
 }
 
-/* --------------------------------------------------------------
+/* ================================================================
    BOOTSTRAP
-   -------------------------------------------------------------- */
+   ================================================================ */
 document.addEventListener('DOMContentLoaded', () => {
+  // Planner setup
   dutyDateInput        = document.getElementById('dutyDate');
   signOnTimeInput      = document.getElementById('signOnTime');
   travelOverrideSelect = document.getElementById('travelOverride');
@@ -755,21 +980,25 @@ document.addEventListener('DOMContentLoaded', () => {
   restoreOrDefaultInputs();
   render();
 
-  // Recalculate instantly on any input change — no Calculate button.
   dutyDateInput.addEventListener('input', render);
   signOnTimeInput.addEventListener('input', render);
   travelOverrideSelect.addEventListener('change', render);
   ttaOffsetSelect.addEventListener('change', render);
 
-  // Keep the countdown ticking every second even without input changes.
   setInterval(updateCountdown, 1000);
 
-  // Register the service worker for offline support (see service-worker.js).
-  // This silently no-ops if served over file:// or without HTTPS/localhost.
+  // Checklist setup
+  renderChecklist('briefcase');
+  renderChecklist('overnights');
+  initResetButton('briefcase');
+  initResetButton('overnights');
+
+  // Tab navigation
+  initTabBar();
+
+  // Service worker for offline caching
   if ('serviceWorker' in navigator){
-    navigator.serviceWorker.register('service-worker.js').catch(() => {
-      /* Offline-first app still works without the SW; this is best-effort. */
-    });
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
   }
 });
 </script>

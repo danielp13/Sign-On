@@ -4,7 +4,7 @@
    fully offline, after the first successful visit.
    ==================================================================== */
 
-const CACHE_NAME = 'signon-app-v1';
+const CACHE_NAME = 'signon-app-v3';
 
 // Every file that makes up the app shell.
 const APP_SHELL = [

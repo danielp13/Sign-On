@@ -1,7 +1,7 @@
 {
-  "name": "Sign On — Crew Departure Planner",
-  "short_name": "Sign On",
-  "description": "Offline crew departure planning tool. Calculates Sair de casa, P6, TTA and Sign On times, with live countdown.",
+  "name": "Pre Flight TAP",
+  "short_name": "Pre Flight",
+  "description": "Crew ops toolkit: departure planner, briefcase checklist, and overnights checklist.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
